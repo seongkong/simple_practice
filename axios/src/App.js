@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { deleteUser, getUserData, postUserData } from "./AxiosAPI";
 import styled from "styled-components";
+import Slick from "./Components/Slick"; // Slick 컴포넌트 임포트
 
 const App = () => {
   const [userData, setUserData] = useState([]);
@@ -79,8 +80,27 @@ const App = () => {
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
+  // 스크롤에 따라 흐려지는 효과
+  const [blurAmount, setBlurAmount] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const maxScroll = 200; // 최대 스크롤 값
+      const blur = Math.min(scrollTop / maxScroll, 1) * 10; // 최대 blur 값 10
+      setBlurAmount(blur);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
     <DivContainer>
+      <BlurOverlay blur={blurAmount} />
+      <SlickContainer>
+        <Slick /> {/* Slick 컴포넌트 추가 */}
+      </SlickContainer>
       <PageTitle>User Data 가져오기</PageTitle>
       <SearchContainer onSubmit={handleSearch}>
         <input
@@ -200,7 +220,9 @@ const UserDataTable = ({ userData, handleDeleteData }) => (
           <td>{data.age}</td>
           <td>{data.part}</td>
           <td>
-            <img width="100px" src={data.image} alt={`User ${data.id} image`} />
+            <ImageWrapper>
+              <img src={data.image} alt={`User ${data.id} image`} />
+            </ImageWrapper>
           </td>
           <td>
             <DeleteButton onClick={() => handleDeleteData(data.id)}>
@@ -232,9 +254,40 @@ const DivContainer = styled.div`
   justify-content: center;
   align-items: center;
   flex-direction: column;
+  position: relative;
   & > table {
     text-align: center;
   }
+`;
+
+const SlickContainer = styled.div`
+  width: 1440px;
+  height: 758px;
+  overflow: hidden;
+  margin-bottom: 20px;
+`;
+
+const ImageWrapper = styled.div`
+  width: 1440px;
+  height: 758px;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
+const BlurOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(${(props) => props.blur}px);
+  pointer-events: none;
 `;
 
 const PageTitle = styled.p`
